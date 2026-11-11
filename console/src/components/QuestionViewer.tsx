@@ -107,7 +107,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
           </span>
 
           <div className="flex items-center gap-2 text-xs text-slate-300">
-            <span className="font-semibold text-white">{question.subject}</span>
+            <span className="font-semibold text-slate-900">{question.subject}</span>
             <span className="text-slate-600">•</span>
             <span>{question.chapter}</span>
             {question.concept && (
@@ -250,7 +250,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
                     <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
                       AI Triage Verdict
                     </span>
-                    <span className="text-sm font-bold text-white capitalize flex items-center gap-2 mt-0.5">
+                    <span className="text-sm font-bold text-slate-900 capitalize flex items-center gap-2 mt-0.5">
                       {primaryResult.verdict.replace('_', ' ')}
                       {primaryResult.repair && (
                         <span className="text-xs font-mono font-normal text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded">
@@ -453,7 +453,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
       {isEditing && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-lg w-full space-y-4 shadow-2xl">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Edit3 className="w-4 h-4 text-indigo-400" /> Adjust Proposed Edit
             </h3>
 

@@ -40,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-white tracking-tight">Acadza Faculty Console</h1>
+              <h1 className="text-base font-bold text-slate-900 tracking-tight">Acadza Faculty Console</h1>
               <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                 Report → Fix
               </span>

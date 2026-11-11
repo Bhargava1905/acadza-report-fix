@@ -291,7 +291,7 @@ export const App: React.FC = () => {
   }, [allGroupedItems, auditRecords, liveQuestions.length]);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col font-sans">
+    <div className="light-review min-h-screen bg-slate-950 flex flex-col font-sans">
       <Header
         stats={stats}
         filterSubject={filterSubject}

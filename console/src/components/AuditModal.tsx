@@ -25,7 +25,7 @@ export const AuditModal: React.FC<AuditModalProps> = ({ records, onClose }) => {
         <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-indigo-400" />
-            <h2 className="text-sm font-bold text-white">Faculty Audit Trail ({records.length} Actions)</h2>
+            <h2 className="text-sm font-bold text-slate-900">Faculty Audit Trail ({records.length} Actions)</h2>
           </div>
           <div className="flex items-center gap-2">
             {records.length > 0 && (
