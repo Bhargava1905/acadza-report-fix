@@ -304,7 +304,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
                           Current Live Value
                         </span>
                         <div className="text-xs text-red-200 font-mono break-all bg-red-950/40 p-2 rounded border border-red-900/40">
-                          {diffResult.segments.map((segment, index) => <span key={index} className={segment.type === 'removed' ? 'line-through' : ''}>{segment.type === 'added' ? '' : segment.text}</span>)}
+                          {diffResult.segments.map((segment, index) => <span key={index}>{segment.type === 'added' ? '' : segment.text}</span>)}
                         </div>
                       </div>
 
