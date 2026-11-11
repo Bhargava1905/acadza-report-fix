@@ -49,7 +49,7 @@ export const AuditModal: React.FC<AuditModalProps> = ({ records, onClose }) => {
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {records.length === 0 ? (
             <div className="text-center py-12 text-slate-500 text-xs">
-              No faculty actions recorded yet in this session.
+              No review decisions recorded yet in this session.
             </div>
           ) : (
             records.map((rec) => (

@@ -417,7 +417,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
               )}
               {status === 'pending' && (
                 <span className="text-xs text-slate-400">
-                  Ready for 10 PM Faculty Action:
+                  Ready for review:
                 </span>
               )}
             </div>

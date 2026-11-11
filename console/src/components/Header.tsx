@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Flame, Filter, CheckCircle2, AlertTriangle, History, Moon } from 'lucide-react';
+import { ShieldCheck, Flame, Filter, CheckCircle2, AlertTriangle, History } from 'lucide-react';
 
 interface HeaderProps {
   stats: {
@@ -44,13 +44,9 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                 Report → Fix
               </span>
-              <span className="flex items-center gap-1 text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                <Moon className="w-3 h-3 text-amber-400" />
-                <span>10 PM Fast-Review Mode</span>
-              </span>
             </div>
             <p className="text-xs text-slate-400">
-              Safe AI triage & surgical repairs for ~8 lakh JEE/NEET questions
+              Review reported question issues and proposed fixes
             </p>
           </div>
         </div>
