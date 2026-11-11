@@ -514,8 +514,8 @@
     "repair": "answer_key",
     "edit": {
       "field": "answer",
-      "find": "['A, B, D']",
-      "replace": "['A', 'B', 'D']"
+      "find": "A, B, D",
+      "replace": "[\"A\", \"B\", \"D\"]"
     },
     "route": "auto_apply",
     "confidence": 0.96,

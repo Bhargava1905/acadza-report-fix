@@ -7,7 +7,8 @@ interface HeaderProps {
     totalReports: number;
     pendingReview: number;
     p0Count: number;
-    autoApplied: number;
+    autoApplySuggested: number;
+    approvedCount: number;
     auditedCount: number;
   };
   filterSubject: string;
@@ -70,8 +71,14 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="font-semibold">{stats.autoApplied}</span>
-            <span className="text-emerald-400/80">Safe Auto-applied</span>
+            <span className="font-semibold">{stats.autoApplySuggested}</span>
+            <span className="text-emerald-400/80">AI Auto Suggestions</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-300">
+            <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="font-semibold">{stats.approvedCount}</span>
+            <span className="text-indigo-300/80">Faculty Approved</span>
           </div>
 
           <button

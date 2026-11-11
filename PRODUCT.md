@@ -1,49 +1,17 @@
-# Acadza Product Philosophy: The "Report → Fix" Engine (`PRODUCT.md`)
+# Product principles
 
----
+## Who loses most
 
-### 1. Who Loses the Most When a Question is Broken?
+The greatest harm lands on the quiet student who sees a broken question next. A wrong key can turn a correct answer into self-doubt, wasted revision time, and a lower mock-test score. The console therefore puts answer-key defects first, increases urgency when several students report the same question, and gives students a clear explanation rather than a dismissive rejection.
 
-The obvious answer is "the student who reported it." **That answer is wrong.**
+## What AI must never apply alone
 
-The student who reported the defect has already encountered the error, felt skeptical, and taken action. **The student who loses the most is the quiet, hardworking 17-year-old student who encounters the question next, gets marked wrong, assumes *they* were foolish, spends 45 minutes re-solving it in tears at midnight, and loses faith in their own conceptual ability.**
+AI must never independently publish a new distractor, diagram, syllabus judgement, chapter reassignment, or an academically ambiguous answer-key change. Those actions require content ownership and may affect marks, percentile calculations, or curriculum decisions. Even an otherwise safe answer-key proposal should halt for faculty if the independent proof is incomplete, the question is ambiguous, or the patch does not match the live record exactly.
 
-In high-stakes exams like JEE and NEET where ranks are decided by single marks, an erroneous question damages more than test scores—it destroys self-confidence.
+## Week-one metric
 
-#### How Our Design Reflects This:
-1. **P0 Urgency on Answer Keys**: In our console queue, answer key defects (`answer_key`) are forced to the top above cosmetic typos. An unnoticed wrong key hurts thousands of test-takers every hour a mock test runs.
-2. **Multi-Report Amplifier**: Questions with multiple reports receive immediate urgency escalation, reflecting compounding student distress.
-3. **Compassionate Student Replies**: When a student is wrong, our AI does not simply state "Rejected." It explains *why* (e.g. reminding them to check units or phase formulas) so the student learns from the encounter rather than feeling dismissed.
+**P0 verified time-to-neutralisation:** time from first report of a wrong answer key to a reviewed production correction. The target is under 15 minutes, with a guardrail for faculty rejection rate. A fast system that faculty frequently overturn is not trustworthy.
 
----
+## Beyond the brief
 
-### 2. What We Would NEVER Let the AI Auto-Apply
-
-We would **never** let the AI auto-apply:
-1. **Answer Key Changes on Ambiguous Questions**: An answer key change retroactively alters student ranks, percentiles, and cutoffs. If independent verification yields less than $98\%$ mathematical certainty or involves contested interpretations, it must halt for human faculty sign-off.
-2. **Authoring New Distractors (`identical_options`)**: When options B and C are identical, creating a replacement option requires pedagogical domain knowledge. An AI hallucinating an invalid distractor can render an entire question unsound.
-3. **Syllabus / Chapter Deletions (`syllabus`, `wrong_chapter`)**: Questions marked out of syllabus by students must stay live until an academic head confirms NTA/NCERT guidelines. Auto-deleting valid questions based on student claims artificially shrinks the question bank.
-
----
-
-### 3. The One Metric We Would Watch in Week 1
-
-> **"Mean Time to Neutralization (MTTN) for P0 Answer Key Defects"**
-> *(The elapsed time from the first student report of a wrong answer key to verified deployment in production.)*
-
-- Today, a broken question remains live for days while faculty manually wade through uncurated inboxes.
-- By grouping reports, running automated independent solves, and presenting faculty with a **1-click visual diff**, our target is to reduce MTTN from **72 hours to under 15 minutes**.
-- A secondary guardrail metric: **"Faculty Rejection Rate of Auto-Proposals"** (must remain $<3\%$, ensuring high faculty trust).
-
----
-
-### 4. One Idea Beyond This Brief: "Live Telemetry Anomaly Detection"
-
-Why wait for a student to tap "Report error"?
-
-Most students who get burned by a wrong answer key **never report it**—they just exit the test frustrated. 
-
-We propose **Telemetry-Driven Proactive Triage**:
-- When a question's selection distribution suddenly deviates from historical cohort baselines (e.g., $82\%$ of top-decile students choose option (A), but the database answer key is (C)), the system flags an **automated internal defect alert**.
-- The triage engine independently re-solves the question and places it into the faculty review console *before* the first student complaint is ever typed.
-- We shift from a **reactive** support desk to a **self-healing question bank**.
+Add proactive anomaly detection: flag questions where high-performing students systematically choose an option other than the stored key. The same verifier and faculty workflow can investigate before students need to report the defect.

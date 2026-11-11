@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GroupedQuestionItem, ProposedEdit } from '../types';
 import { computeVisualDiff } from '../utils/diff';
+import { sanitizeQuestionHtml } from '../utils/sanitize';
 import {
   CheckCircle,
   XCircle,
@@ -21,7 +22,8 @@ interface QuestionViewerProps {
   item: GroupedQuestionItem;
   onApprove: (item: GroupedQuestionItem) => void;
   onReject: (item: GroupedQuestionItem, reason: string) => void;
-  onEdit: (item: GroupedQuestionItem, edit: ProposedEdit) => void;
+  onEdit: (item: GroupedQuestionItem, edit: ProposedEdit) => string | null;
+  allowedEditFields: ProposedEdit['field'][];
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
@@ -33,6 +35,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
   onApprove,
   onReject,
   onEdit,
+  allowedEditFields,
   onPrev,
   onNext,
   hasPrev,
@@ -42,7 +45,8 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [customFind, setCustomFind] = useState('');
   const [customReplace, setCustomReplace] = useState('');
-  const [customField, setCustomField] = useState<'question' | 'solution' | 'answer'>('answer');
+  const [customField, setCustomField] = useState<ProposedEdit['field']>('answer');
+  const [editError, setEditError] = useState('');
 
   const { question, reports, results, urgencyTier, urgencyReason, status } = item;
   const qType = question.questionType;
@@ -61,18 +65,25 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
   const diffResult = computeVisualDiff(originalFieldContent, edit);
 
   const startEdit = () => {
-    setCustomField((edit?.field as any) || 'answer');
+    const defaultField = edit?.field && allowedEditFields.includes(edit.field) ? edit.field : allowedEditFields[0];
+    if (!defaultField) return;
+    setEditError('');
+    setCustomField(defaultField);
     setCustomFind(edit?.find || '');
     setCustomReplace(edit?.replace || '');
     setIsEditing(true);
   };
 
   const handleSaveCustomEdit = () => {
-    onEdit(item, {
+    const error = onEdit(item, {
       field: customField,
       find: customFind,
       replace: customReplace,
     });
+    if (error) {
+      setEditError(error);
+      return;
+    }
     setIsEditing(false);
   };
 
@@ -162,7 +173,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
             <div className="bg-slate-900/60 rounded-xl p-5 border border-slate-800/80 shadow-inner">
               <div
                 className="rendered-content text-slate-100 text-sm leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: qData.question }}
+                dangerouslySetInnerHTML={{ __html: sanitizeQuestionHtml(qData.question) }}
               />
             </div>
 
@@ -174,7 +185,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
               <div className="bg-slate-900/40 rounded-xl p-4 border border-slate-800/80 text-xs text-slate-300 leading-relaxed font-sans">
                 <div
                   className="rendered-content"
-                  dangerouslySetInnerHTML={{ __html: qData.solution || '<span class="text-slate-500">No solution provided in record.</span>' }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeQuestionHtml(qData.solution || '<span class="text-slate-500">No solution provided in record.</span>') }}
                 />
               </div>
             </div>
@@ -275,12 +286,14 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
                         <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                         Target Field: <code className="text-indigo-300 font-mono">{edit.field}</code>
                       </span>
-                      <button
-                        onClick={startEdit}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
-                      >
-                        <Edit3 className="w-3 h-3" /> Custom Edit
-                      </button>
+                      {allowedEditFields.length > 0 && (
+                        <button
+                          onClick={startEdit}
+                          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
+                        >
+                          <Edit3 className="w-3 h-3" /> Custom Edit
+                        </button>
+                      )}
                     </div>
 
                     {/* Before vs After Visual Diff */}
@@ -291,7 +304,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
                           Current Live Value
                         </span>
                         <div className="text-xs text-red-200 font-mono break-all bg-red-950/40 p-2 rounded border border-red-900/40">
-                          {edit.find || '(Empty / Not Stated)'}
+                          {diffResult.segments.map((segment, index) => <span key={index} className={segment.type === 'removed' ? 'line-through' : ''}>{segment.type === 'added' ? '' : segment.text}</span>)}
                         </div>
                       </div>
 
@@ -301,7 +314,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
                           Proposed AI Replacement
                         </span>
                         <div className="text-xs text-emerald-200 font-mono font-semibold break-all bg-emerald-950/40 p-2 rounded border border-emerald-900/40">
-                          {edit.replace}
+                          {diffResult.segments.map((segment, index) => <span key={index}>{segment.type === 'removed' ? '' : segment.text}</span>)}
                         </div>
                       </div>
                     </div>
@@ -419,7 +432,8 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
 
               <button
                 onClick={startEdit}
-                className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                disabled={allowedEditFields.length === 0}
+                className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <Edit3 className="w-4 h-4" /> Adjust...
               </button>
@@ -448,15 +462,13 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
                 <label className="block text-slate-400 mb-1">Target Field</label>
                 <select
                   value={customField}
-                  onChange={(e: any) => setCustomField(e.target.value)}
+                  onChange={(e) => setCustomField(e.target.value as ProposedEdit['field'])}
                   className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200"
                 >
-                  <option value="answer">answer (Answer Key)</option>
-                  <option value="question">question (Stem or Options)</option>
-                  <option value="solution">solution (Explanation)</option>
-                  <option value="questionType">questionType (scq / mcq / integer)</option>
+                  {allowedEditFields.map((field) => <option key={field} value={field}>{field}</option>)}
                 </select>
               </div>
+              {editError && <p role="alert" className="rounded border border-red-500/30 bg-red-950/40 px-3 py-2 text-red-200">{editError}</p>}
 
               <div>
                 <label className="block text-slate-400 mb-1">Find String (What to replace)</label>

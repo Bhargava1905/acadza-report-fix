@@ -1,9 +1,9 @@
-# Bonus: Unreported Defects in Acadza Dataset
+# Bonus: Unreported Defect Candidates in the Acadza Dataset
 
 As noted in the assignment brief:
 > *"Bonus: our data has defects nobody reported. Find them."*
 
-Our systematic audit of all 43 questions in `questions.json` identified several live defects in questions that had zero student reports in `reports.json`:
+Our audit of all 43 questions in `questions.json` identified the following candidates in questions with zero student reports. These are **not auto-applied**: each requires a subject-matter/faculty check against the live rendering and source record before it becomes a production repair.
 
 ---
 

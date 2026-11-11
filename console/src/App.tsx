@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Question, Report, TriageResult, GroupedQuestionItem, AuditRecord, ProposedEdit } from './types';
+import { Question, Report, TriageResult, GroupedQuestionItem, AuditRecord, ProposedEdit, QuestionStatus } from './types';
 import { calculateUrgency } from './utils/urgency';
+import { allowedFields, applyEdit, Taxonomy, validateEdit } from './utils/edits';
 import { Header } from './components/Header';
 import { QueueSidebar } from './components/QueueSidebar';
 import { QuestionViewer } from './components/QuestionViewer';
@@ -18,6 +19,14 @@ export const App: React.FC = () => {
   const [filterSubject, setFilterSubject] = useState('ALL');
   const [filterTier, setFilterTier] = useState('ALL');
   const [filterRoute, setFilterRoute] = useState('ALL');
+  const [liveQuestions, setLiveQuestions] = useState<Question[]>(() => {
+    try {
+      const saved = localStorage.getItem('acadza_live_questions');
+      return saved ? JSON.parse(saved) : (rawQuestions as Question[]);
+    } catch {
+      return rawQuestions as Question[];
+    }
+  });
   const [auditRecords, setAuditRecords] = useState<AuditRecord[]>(() => {
     try {
       const saved = localStorage.getItem('acadza_faculty_audit');
@@ -26,9 +35,10 @@ export const App: React.FC = () => {
       return [];
     }
   });
-  const [statusMap, setStatusMap] = useState<Record<string, 'pending' | 'approved' | 'rejected' | 'edited'>>(() => {
+  const [statusMap, setStatusMap] = useState<Record<string, QuestionStatus>>(() => {
     try {
-      const saved = localStorage.getItem('acadza_question_status');
+      // Versioned after fixing the old UI's unsafe implicit "approved" status.
+      const saved = localStorage.getItem('acadza_question_status_v2');
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -39,7 +49,7 @@ export const App: React.FC = () => {
   // Group raw data by questionId
   const allGroupedItems: GroupedQuestionItem[] = useMemo(() => {
     const qMap = new Map<string, Question>();
-    (rawQuestions as Question[]).forEach((q) => qMap.set(q._id, q));
+    liveQuestions.forEach((q) => qMap.set(q._id, q));
 
     const reportsMap = new Map<string, Report[]>();
     (rawReports as Report[]).forEach((r) => {
@@ -80,13 +90,15 @@ export const App: React.FC = () => {
         primaryVerdict,
         primaryRepair,
         primaryRoute,
-        status: statusMap[qid] || (primaryRoute === 'auto_apply' ? 'approved' : 'pending'),
+        // An AI recommendation is never a faculty approval. Every item starts pending
+        // until a recorded decision is made in this console.
+        status: statusMap[qid] || 'pending',
       });
     });
 
     // Sort by Urgency Score Descending
     return grouped.sort((a, b) => b.urgencyScore - a.urgencyScore);
-  }, [statusMap]);
+  }, [liveQuestions, statusMap]);
 
   // Apply User Filters & Search
   const filteredItems = useMemo(() => {
@@ -143,6 +155,13 @@ export const App: React.FC = () => {
       } else if (e.key === 'ArrowUp' || e.key === 'k') {
         e.preventDefault();
         navigatePrev();
+      } else if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'r') {
+        const keyboardItem = filteredItems.find((item) => item.question._id === selectedQid);
+        if (keyboardItem) {
+          e.preventDefault();
+          if (e.key.toLowerCase() === 'a') handleApprove(keyboardItem);
+          else handleReject(keyboardItem, 'Rejected by faculty via keyboard shortcut');
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -166,9 +185,22 @@ export const App: React.FC = () => {
 
   // Action handlers
   const handleApprove = (item: GroupedQuestionItem) => {
+    const proposedEdit = item.results[0]?.edit;
+    if (proposedEdit) {
+      const validation = validateEdit(item.question, item.results[0], rawTaxonomy as Taxonomy, proposedEdit);
+      if (!validation.valid) {
+        window.alert(`Cannot approve this proposal: ${'reason' in validation ? validation.reason : 'invalid edit'}`);
+        return;
+      }
+      setLiveQuestions((current) => {
+        const next = current.map((question) => question._id === item.question._id ? applyEdit(question, proposedEdit) : question);
+        localStorage.setItem('acadza_live_questions', JSON.stringify(next));
+        return next;
+      });
+    }
     const newStatusMap = { ...statusMap, [item.question._id]: 'approved' as const };
     setStatusMap(newStatusMap);
-    localStorage.setItem('acadza_question_status', JSON.stringify(newStatusMap));
+    localStorage.setItem('acadza_question_status_v2', JSON.stringify(newStatusMap));
 
     const newRecord: AuditRecord = {
       id: `AUDIT_${Date.now()}`,
@@ -177,8 +209,8 @@ export const App: React.FC = () => {
       action: 'approved',
       actor: 'Faculty (10 PM)',
       timestamp: new Date().toISOString(),
-      originalEdit: item.results[0]?.edit,
-      appliedEdit: item.results[0]?.edit,
+      originalEdit: proposedEdit,
+      appliedEdit: proposedEdit,
     };
 
     const newAudit = [newRecord, ...auditRecords];
@@ -192,7 +224,7 @@ export const App: React.FC = () => {
   const handleReject = (item: GroupedQuestionItem, reason: string) => {
     const newStatusMap = { ...statusMap, [item.question._id]: 'rejected' as const };
     setStatusMap(newStatusMap);
-    localStorage.setItem('acadza_question_status', JSON.stringify(newStatusMap));
+    localStorage.setItem('acadza_question_status_v2', JSON.stringify(newStatusMap));
 
     const newRecord: AuditRecord = {
       id: `AUDIT_${Date.now()}`,
@@ -211,10 +243,18 @@ export const App: React.FC = () => {
     navigateNext();
   };
 
-  const handleCustomEdit = (item: GroupedQuestionItem, edit: ProposedEdit) => {
+  const handleCustomEdit = (item: GroupedQuestionItem, edit: ProposedEdit): string | null => {
+    const validation = validateEdit(item.question, item.results[0], rawTaxonomy as Taxonomy, edit);
+    if (!validation.valid) return 'reason' in validation ? validation.reason : 'Invalid edit.';
+
+    setLiveQuestions((current) => {
+      const next = current.map((question) => question._id === item.question._id ? applyEdit(question, edit) : question);
+      localStorage.setItem('acadza_live_questions', JSON.stringify(next));
+      return next;
+    });
     const newStatusMap = { ...statusMap, [item.question._id]: 'edited' as const };
     setStatusMap(newStatusMap);
-    localStorage.setItem('acadza_question_status', JSON.stringify(newStatusMap));
+    localStorage.setItem('acadza_question_status_v2', JSON.stringify(newStatusMap));
 
     const newRecord: AuditRecord = {
       id: `AUDIT_${Date.now()}`,
@@ -230,22 +270,25 @@ export const App: React.FC = () => {
     const newAudit = [newRecord, ...auditRecords];
     setAuditRecords(newAudit);
     localStorage.setItem('acadza_faculty_audit', JSON.stringify(newAudit));
+    return null;
   };
 
   // Header stats
   const stats = useMemo(() => {
     const p0Count = allGroupedItems.filter((i) => i.urgencyTier === 'P0').length;
     const pendingReview = allGroupedItems.filter((i) => i.status === 'pending').length;
-    const autoApplied = allGroupedItems.filter((i) => i.primaryRoute === 'auto_apply').length;
+    const autoApplySuggested = allGroupedItems.filter((i) => i.primaryRoute === 'auto_apply').length;
+    const approvedCount = allGroupedItems.filter((i) => i.status === 'approved').length;
     return {
-      totalQuestions: rawQuestions.length,
+      totalQuestions: liveQuestions.length,
       totalReports: rawReports.length,
       pendingReview,
       p0Count,
-      autoApplied,
+      autoApplySuggested,
+      approvedCount,
       auditedCount: auditRecords.length,
     };
-  }, [allGroupedItems, auditRecords]);
+  }, [allGroupedItems, auditRecords, liveQuestions.length]);
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans">
@@ -275,6 +318,7 @@ export const App: React.FC = () => {
             onApprove={handleApprove}
             onReject={handleReject}
             onEdit={handleCustomEdit}
+            allowedEditFields={allowedFields(currentItem.results[0], rawTaxonomy as Taxonomy)}
             onPrev={navigatePrev}
             onNext={navigateNext}
             hasPrev={currentIndex > 0}

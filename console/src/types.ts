@@ -43,6 +43,8 @@ export interface ProposedEdit {
   replace: string;
 }
 
+export type QuestionStatus = 'pending' | 'approved' | 'rejected' | 'edited';
+
 export interface TriageResult {
   reportId: string;
   questionId: string;
@@ -77,5 +79,5 @@ export interface GroupedQuestionItem {
   primaryVerdict: string;
   primaryRepair: string | null;
   primaryRoute: string;
-  status: 'pending' | 'approved' | 'rejected' | 'edited';
+  status: QuestionStatus;
 }

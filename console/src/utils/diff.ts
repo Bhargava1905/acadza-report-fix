@@ -14,8 +14,8 @@ export function computeVisualDiff(originalText: string, edit: ProposedEdit | nul
   if (!edit || !edit.find) {
     return {
       hasDiff: false,
-      beforeHtml: originalText,
-      afterHtml: originalText,
+      beforeHtml: escapeHtml(originalText),
+      afterHtml: escapeHtml(originalText),
       segments: [{ type: 'unchanged', text: originalText }]
     };
   }
@@ -40,8 +40,8 @@ export function computeVisualDiff(originalText: string, edit: ProposedEdit | nul
   const beforePrefix = originalText.slice(0, idx);
   const beforeSuffix = originalText.slice(idx + find.length);
 
-  const beforeHtml = `${beforePrefix}<mark class="bg-red-500/30 text-red-200 line-through rounded px-1">${find}</mark>${beforeSuffix}`;
-  const afterHtml = `${beforePrefix}<mark class="bg-emerald-500/30 text-emerald-200 font-semibold rounded px-1">${replace}</mark>${beforeSuffix}`;
+  const beforeHtml = `${escapeHtml(beforePrefix)}<mark class="bg-red-500/30 text-red-200 line-through rounded px-1">${escapeHtml(find)}</mark>${escapeHtml(beforeSuffix)}`;
+  const afterHtml = `${escapeHtml(beforePrefix)}<mark class="bg-emerald-500/30 text-emerald-200 font-semibold rounded px-1">${escapeHtml(replace)}</mark>${escapeHtml(beforeSuffix)}`;
 
   return {
     hasDiff: true,

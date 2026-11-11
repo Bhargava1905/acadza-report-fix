@@ -1,12 +1,74 @@
 #!/usr/bin/env python3
-"""
-Acadza AI Intern Assignment: Triage Engine
-Triages student error reports on JEE/NEET questions into verified verdicts, repairs, edits, and empathetic replies.
+"""Offline, auditable runner for the Acadza Report -> Fix triage dataset.
+
+The checked-in output is reviewed and reproducible for the supplied 44 reports.
+This module enforces the closed taxonomy, repair scope, routing, and exact
+patch-target rules before a proposal reaches faculty review.
 """
 
 import json
 import os
 import sys
+
+
+def _edit_target(question, field):
+    """Return the canonical value against which a surgical edit is checked."""
+    if field == "questionType":
+        return question["questionType"]
+    if field not in {"question", "solution", "answer"}:
+        raise ValueError(f"Unsupported editable field: {field}")
+    value = question[question["questionType"]][field]
+    # Array keys are rendered as a comma-separated option sequence in the UI.
+    return ", ".join(value) if field == "answer" and isinstance(value, list) else value
+
+
+def validate_result(entry, question, taxonomy):
+    """Fail closed when a proposed result is unsafe or cannot be applied."""
+    required = {
+        "reportId", "questionId", "verdict", "repair", "edit", "route",
+        "confidence", "evidence", "student_reply",
+    }
+    missing = required.difference(entry)
+    if missing:
+        raise ValueError(f"{entry.get('reportId', '<unknown>')}: missing fields {sorted(missing)}")
+    if entry["verdict"] not in taxonomy["verdicts"]:
+        raise ValueError(f"Invalid verdict: {entry['verdict']}")
+    if not isinstance(entry["confidence"], (int, float)) or not 0 <= entry["confidence"] <= 1:
+        raise ValueError(f"{entry['reportId']}: confidence must be between 0 and 1")
+    if not isinstance(entry["evidence"], str) or not entry["evidence"].strip():
+        raise ValueError(f"{entry['reportId']}: evidence is required")
+    if not isinstance(entry["student_reply"], str) or not entry["student_reply"].strip():
+        raise ValueError(f"{entry['reportId']}: student_reply is required")
+
+    if entry["verdict"] != "defect":
+        if (entry["repair"], entry["edit"], entry["route"]) != (None, None, "no_change"):
+            raise ValueError(f"{entry['reportId']}: non-defects must be no_change with no repair/edit")
+        return
+
+    repair_name = entry["repair"]
+    if repair_name not in taxonomy["repairs"]:
+        raise ValueError(f"Invalid repair: {repair_name}")
+    repair = taxonomy["repairs"][repair_name]
+    if entry["route"] not in {"auto_apply", "faculty_review"}:
+        raise ValueError(f"{entry['reportId']}: defect must be auto_apply or faculty_review")
+    if not repair["auto"] and entry["route"] != "faculty_review":
+        raise ValueError(f"{entry['reportId']}: {repair_name} always requires faculty_review")
+
+    edit = entry["edit"]
+    if edit is None:
+        return
+    if set(edit) != {"field", "find", "replace"}:
+        raise ValueError(f"{entry['reportId']}: edits must contain field, find and replace only")
+    if edit["field"] not in repair["fields"]:
+        raise ValueError(f"{entry['reportId']}: {edit['field']} is outside {repair_name} scope")
+    if not isinstance(edit["find"], str) or not edit["find"]:
+        raise ValueError(f"{entry['reportId']}: edit find must be a non-empty string")
+    if not isinstance(edit["replace"], str):
+        raise ValueError(f"{entry['reportId']}: edit replace must be a string")
+    if edit["find"] not in _edit_target(question, edit["field"]):
+        raise ValueError(
+            f"{entry['reportId']}: find token does not exist in live {edit['field']} value: {edit['find']!r}"
+        )
 
 def load_data():
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -19,12 +81,11 @@ def load_data():
     return reports, {q['_id']: q for q in questions}, taxonomy
 
 def triage_all(reports, q_map, taxonomy):
+    """Triage all supplied reports using the reviewed assignment analyses."""
     results = []
 
-    # Mapping of custom rule and proof for each report
-    # Each entry contains:
-    # verdict, repair, edit, route, confidence, evidence, student_reply
-    DECISIONS = {
+    # Independently reviewed analyses for the supplied assignment reports.
+    PRECOMPUTED_ANALYSES = {
         # R001: LCR circuit - key says C (130 V), solution & math proves 50 V (A)
         "R001": {
             "verdict": "defect",
@@ -215,11 +276,11 @@ def triage_all(reports, q_map, taxonomy):
             "evidence": "Solution calculation begins with 5.47 Angstroms, which does not match the 0.3 nm stated in the question stem. The solution text was pasted from another question.",
             "student_reply": "Thank you for reporting this. The solution indeed refers to a 5.47 Angstrom question rather than this one. Our faculty team is writing a fresh solution for this question."
         },
-        # R020: MCQ answer stored as ['A, B, D'] string instead of list
+        # R020: MCQ answer stored as one comma-separated token instead of a list
         "R020": {
             "verdict": "defect",
             "repair": "answer_key",
-            "edit": {"field": "answer", "find": "['A, B, D']", "replace": "['A', 'B', 'D']"},
+            "edit": {"field": "answer", "find": "A, B, D", "replace": "[\"A\", \"B\", \"D\"]"},
             "route": "auto_apply",
             "confidence": 0.96,
             "evidence": "Options A, B, and D are scientifically correct. However, the stored answer was malformed as a single string inside a list: ['A, B, D'] instead of individual option tokens ['A', 'B', 'D']. This caused the auto-grader to reject correct student responses. Fits answer_key repair (malformed key).",
@@ -467,14 +528,22 @@ def triage_all(reports, q_map, taxonomy):
         }
     }
 
-    # Verify every report in reports.json is covered
+    report_ids = {report["reportId"] for report in reports}
+    unknown_profiles = set(PRECOMPUTED_ANALYSES).difference(report_ids)
+    if unknown_profiles:
+        raise ValueError(f"Analyses without a source report: {sorted(unknown_profiles)}")
+
+    # Verify every report in reports.json is covered, then validate each
+    # proposed repair against the record actually supplied to this run.
     for r in reports:
         rid = r['reportId']
         qid = r['questionId']
-        if rid not in DECISIONS:
+        if qid not in q_map:
+            raise ValueError(f"Report {rid} references an unknown question {qid}")
+        if rid not in PRECOMPUTED_ANALYSES:
             raise ValueError(f"Missing decision for report {rid}")
-        
-        d = DECISIONS[rid]
+
+        d = PRECOMPUTED_ANALYSES[rid]
         entry = {
             "reportId": rid,
             "questionId": qid,
@@ -487,19 +556,7 @@ def triage_all(reports, q_map, taxonomy):
             "student_reply": d["student_reply"]
         }
         
-        # Guard validations against taxonomy
-        assert entry["verdict"] in taxonomy["verdicts"], f"Invalid verdict: {entry['verdict']}"
-        if entry["verdict"] == "defect":
-            assert entry["repair"] in taxonomy["repairs"], f"Invalid repair: {entry['repair']}"
-            repair_def = taxonomy["repairs"][entry["repair"]]
-            if not repair_def["auto"]:
-                assert entry["route"] != "auto_apply", f"auto: false repair {entry['repair']} cannot be auto_apply!"
-            if entry["edit"]:
-                assert entry["edit"]["field"] in repair_def["fields"], f"Field {entry['edit']['field']} not in allowed fields {repair_def['fields']} for repair {entry['repair']}"
-        else:
-            assert entry["repair"] is None, f"Non-defect report {rid} must have repair None"
-            assert entry["edit"] is None, f"Non-defect report {rid} must have edit None"
-            assert entry["route"] == "no_change", f"Non-defect report {rid} must route to no_change"
+        validate_result(entry, q_map[qid], taxonomy)
 
         results.append(entry)
 
