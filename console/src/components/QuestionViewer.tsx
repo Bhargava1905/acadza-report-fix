@@ -170,7 +170,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Question Stem HTML */}
-            <div className="bg-slate-900/60 rounded-xl p-5 border border-slate-800/80 shadow-inner">
+            <div className="question-paper bg-slate-900/60 rounded-xl p-5 border border-slate-800/80">
               <div
                 className="rendered-content text-slate-100 text-sm leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: sanitizeQuestionHtml(qData.question) }}
@@ -182,7 +182,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
               <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                 Stored Reference Solution
               </h4>
-              <div className="bg-slate-900/40 rounded-xl p-4 border border-slate-800/80 text-xs text-slate-300 leading-relaxed font-sans">
+              <div className="question-paper bg-slate-900/40 rounded-xl p-4 border border-slate-800/80 text-xs text-slate-300 leading-relaxed font-sans">
                 <div
                   className="rendered-content"
                   dangerouslySetInnerHTML={{ __html: sanitizeQuestionHtml(qData.solution || '<span class="text-slate-500">No solution provided in record.</span>') }}
@@ -245,7 +245,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
             {activeTab === 'diff' && (
               <div className="space-y-4">
                 {/* AI Verdict Summary Banner */}
-                <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                <div className="review-card p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
                       AI Triage Verdict
@@ -280,7 +280,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
 
                 {/* Proposed Edit Diff Box */}
                 {edit ? (
-                  <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-sm">
+                  <div className="review-card bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
@@ -326,7 +326,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
                 )}
 
                 {/* Student Reply Preview */}
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                <div className="review-card p-4 rounded-xl bg-slate-900/80 border border-slate-800">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-2">
                     <MessageSquare className="w-3 h-3 text-indigo-400" />
                     Student Reply Preview (Sent back to student)
@@ -340,7 +340,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
 
             {activeTab === 'evidence' && (
               <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                <div className="review-card p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-300">Independent AI Verification</span>
                     <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
@@ -382,7 +382,7 @@ export const QuestionViewer: React.FC<QuestionViewerProps> = ({
                 {reports.map((r) => (
                   <div
                     key={r.reportId}
-                    className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-2"
+                  className="review-card p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-2"
                   >
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="font-mono text-slate-400">{r.reportId} • {r.studentId}</span>

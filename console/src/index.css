@@ -5,22 +5,21 @@
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900 selection:bg-indigo-200 selection:text-slate-950;
+    font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   }
 }
 
-/*
- * The supplied question HTML has its own text colours (including black).
- * A light review surface keeps that source content readable without changing
- * the original question record.
- */
-.light-review [class*="bg-slate-950"] { background-color: #f8fafc !important; }
+/* Calm, high-contrast review palette. Source question HTML may specify black text,
+   so the workspace is deliberately light without modifying the source record. */
+.light-review { background: #f6f8fc; color: #172033; }
+.light-review [class*="bg-slate-950"] { background-color: #f6f8fc !important; }
 .light-review [class*="bg-slate-900"] { background-color: #ffffff !important; }
-.light-review [class*="bg-slate-800"] { background-color: #f1f5f9 !important; }
-.light-review [class*="bg-slate-700"] { background-color: #e2e8f0 !important; }
+.light-review [class*="bg-slate-800"] { background-color: #f2f5fa !important; }
+.light-review [class*="bg-slate-700"] { background-color: #e7ecf4 !important; }
 
 .light-review [class*="border-slate-800"],
 .light-review [class*="border-slate-700"],
-.light-review [class*="border-slate-600"] { border-color: #cbd5e1 !important; }
+.light-review [class*="border-slate-600"] { border-color: #d7dfeb !important; }
 
 .light-review [class*="text-slate-100"],
 .light-review [class*="text-slate-200"] { color: #0f172a !important; }
@@ -28,6 +27,45 @@
 .light-review [class*="text-slate-400"] { color: #475569 !important; }
 .light-review [class*="text-slate-500"],
 .light-review [class*="text-slate-600"] { color: #64748b !important; }
+
+/* The dark-mode pastel utility colours are too faint on a light surface. */
+.light-review [class*="text-red-200"],
+.light-review [class*="text-red-300"],
+.light-review [class*="text-red-400"] { color: #b42318 !important; }
+.light-review [class*="text-amber-200"],
+.light-review [class*="text-amber-300"],
+.light-review [class*="text-amber-400"] { color: #a15c00 !important; }
+.light-review [class*="text-emerald-200"],
+.light-review [class*="text-emerald-300"],
+.light-review [class*="text-emerald-400"] { color: #087b58 !important; }
+.light-review [class*="text-indigo-200"],
+.light-review [class*="text-indigo-300"],
+.light-review [class*="text-indigo-400"] { color: #4f46e5 !important; }
+
+.light-review [class*="bg-red-950"] { background-color: #fff3f2 !important; }
+.light-review [class*="border-red-900"],
+.light-review [class*="border-red-800"] { border-color: #f5b7b1 !important; }
+.light-review [class*="bg-emerald-950"] { background-color: #ecfdf5 !important; }
+.light-review [class*="border-emerald-900"] { border-color: #a7e7ca !important; }
+
+.review-header {
+  background: linear-gradient(100deg, #ffffff 0%, #fbfcff 65%, #f4f5ff 100%) !important;
+  box-shadow: 0 1px 0 rgba(20, 35, 65, 0.04);
+}
+
+.review-sidebar { background: #fbfcff !important; }
+
+.review-card {
+  background: #ffffff !important;
+  border-color: #dce4f0 !important;
+  box-shadow: 0 2px 8px rgba(29, 43, 78, 0.045);
+}
+
+.question-paper {
+  background: #ffffff !important;
+  border-color: #d6e0ee !important;
+  box-shadow: 0 4px 12px rgba(32, 48, 83, 0.055);
+}
 
 /* Custom MathML styling for clear equations */
 math {
@@ -51,16 +89,16 @@ math[display="block"] {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #edf1f7;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #94a3b8;
+  background: #b6c2d4;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #8796ad;
 }
 
 /* Question rendered styling */

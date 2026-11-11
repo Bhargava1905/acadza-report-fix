@@ -22,7 +22,7 @@ export const QueueSidebar: React.FC<QueueSidebarProps> = ({
   };
 
   return (
-    <aside className="w-full lg:w-96 flex-shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col h-[calc(100vh-61px)]">
+    <aside className="review-sidebar w-full lg:w-96 flex-shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col h-[calc(100vh-61px)]">
       {/* Search Header */}
       <div className="p-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur">
         <div className="relative">
@@ -67,8 +67,8 @@ export const QueueSidebar: React.FC<QueueSidebarProps> = ({
                 onClick={() => onSelect(item.question._id)}
                 className={`p-3 rounded-lg cursor-pointer transition-all border text-left ${
                   isSelected
-                    ? 'bg-indigo-950/40 border-indigo-500/60 shadow-lg shadow-indigo-950/50 ring-1 ring-indigo-500/40'
-                    : 'bg-slate-800/40 border-slate-800/80 hover:bg-slate-800/80 hover:border-slate-700'
+                    ? 'bg-indigo-50 border-indigo-400 shadow-md shadow-indigo-100 ring-1 ring-indigo-200'
+                    : 'bg-white border-slate-200 hover:bg-indigo-50/60 hover:border-indigo-200 hover:shadow-sm'
                 }`}
               >
                 {/* Top Badges Row */}

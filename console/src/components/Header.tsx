@@ -31,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAudit,
 }) => {
   return (
-    <header className="bg-slate-900 border-b border-slate-800 px-6 py-3.5 sticky top-0 z-30 shadow-md">
+    <header className="review-header bg-slate-900 border-b border-slate-800 px-6 py-3.5 sticky top-0 z-30 shadow-sm">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Brand & Title */}
         <div className="flex items-center gap-3">
